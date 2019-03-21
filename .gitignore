@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/ctl
+ctl.so
+ctl.dylib
+ctl.dll
+ctl.a
+ctl.lib
+ctl-test-*
+*.exe
+*.o
+*.obj
+*.lst
+setting.json

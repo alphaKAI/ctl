@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"庄司明洋"
+	],
+	"copyright": "Copyright © 2019, 庄司明洋",
+	"dependencies": {
+		"twitter4d": "~>0.0.70"
+	},
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "ctl"
+}
