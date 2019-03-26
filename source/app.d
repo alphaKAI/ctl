@@ -85,9 +85,11 @@ WinSize getWinSize() {
 void main(string[] args) {
   string specified_account;
   string count = "20";
+  string specified_user;
 
   auto helpInformation = getopt(args, "account|a", "specify the account to tweet",
-      &specified_account, "count|c", "count of tweets", &count);
+      &specified_account, "count|c", "count of tweets",
+      &count, "user|u", "get tweets from specified user(screen_name)", &specified_user);
   if (helpInformation.helpWanted) {
     defaultGetoptPrinter("Usage:", helpInformation.options);
     return;
@@ -103,9 +105,16 @@ void main(string[] args) {
   }
 
   auto t4d = new Twitter4D(sf.accounts[specified_account]);
-  auto result = t4d.request("GET", "statuses/home_timeline.json", [
-      "count": count
-      ]);
+
+  char[] result;
+  if (specified_user is null) {
+    result = t4d.request("GET", "statuses/home_timeline.json", ["count": count]);
+  } else {
+    result = t4d.request("GET", "statuses/user_timeline.json", [
+        "count": count,
+        "screen_name": specified_user
+        ]);
+  }
 
   auto parsed = parseJSON(result);
 
