@@ -1,4 +1,5 @@
 import std.stdio;
+import std.process;
 import std.file, std.path, std.json, std.conv, std.string;
 import std.format, std.getopt, std.typecons;
 import twitter4d;
@@ -98,10 +99,11 @@ void main(string[] args) {
   }
 
   string setting_file_path;
+  auto xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
   enum alphakai_dir = "~/.myscripts/ctl";
   enum default_dir = "~/.config/ctl";
   string setting_file_name = "setting.json";
-  static immutable setting_file_search_dirs = [default_dir, alphakai_dir];
+  immutable setting_file_search_dirs = [xdg_config_home, default_dir, alphakai_dir];
 
   foreach (dir; setting_file_search_dirs) {
     immutable path = expandTilde("%s/%s".format(dir, setting_file_name));
