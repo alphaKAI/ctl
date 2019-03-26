@@ -167,7 +167,6 @@ void main(string[] args) {
 
   size_t line_width = getWinSize().width;
   foreach_reverse (elem; parsed.array) {
-    elem.writeln;
     writeln(str_rep("-", line_width));
     dstring name = "%s(@%s)".format(elem.object["user"].object["name"].str,
         elem.object["user"].object["screen_name"].str).to!dstring;
@@ -181,10 +180,9 @@ void main(string[] args) {
 
     dstring reaction_box = "[RT: %10d, Favs: %10d]".format(retweet_count,
         favorite_count).to!dstring;
-    if (mention) {
-      string in_reply_to_status_id = elem.object["id_str"].str;
-      reaction_box = "[in_reply_to: %s] %s".format(in_reply_to_status_id, reaction_box).to!dstring;
-    }
+
+    string in_reply_to_status_id = elem.object["id_str"].str;
+    reaction_box = "[in_reply_to: %s] %s".format(in_reply_to_status_id, reaction_box).to!dstring;
     dstring pad_box = str_rep(" ", line_width - east_asian_width(reaction_box)).to!dstring;
     writefln("%s%s", pad_box, reaction_box);
   }
