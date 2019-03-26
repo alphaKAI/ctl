@@ -44,6 +44,14 @@ Then,
 $ ./ctl
 ```
 
+## Useful Options
+
+- --acount some_account or -a some_account : use some_account instead of default_account
+- --mention or -m : get mentions of you
+- --count num or -c : specify count of tweets
+- --user screen_name or -u screen_name : get tweets from screen_name
+
+
 ## LICENSE
 ctl is released under the MIT License.  
 Copyright (C) 2019, Akihiro Shoji
