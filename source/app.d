@@ -118,5 +118,13 @@ void main(string[] args) {
     string pad = str_rep(" ", line_width - (east_asian_width(name) + east_asian_width(created_at)));
     writefln("%s%s%s", name, pad, created_at);
     writeln(elem.object["text"].str.to!dstring.str_adjust_len(line_width));
+
+    size_t retweet_count = elem.object["retweet_count"].integer;
+    size_t favorite_count = elem.object["favorite_count"].integer;
+
+    dstring reaction_box = "[RT: %10d, Favs: %10d]".format(retweet_count,
+        favorite_count).to!dstring;
+    dstring pad_box = str_rep(" ", line_width - east_asian_width(reaction_box)).to!dstring;
+    writefln("%s%s", pad_box, reaction_box);
   }
 }
