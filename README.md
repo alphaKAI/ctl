@@ -10,14 +10,13 @@
 
 ```zsh
 $ git clone https://github.com/alphaKAI/ctl
-$ editor source/app.d # please configure setting file directory
 $ cd ctwi
 $ dub build
 ```
 
 ## Usage
 
-At first, Please make a setting file as follows:  
+At first, Please make a setting file as follows at `~/.config/ctl` :  
 
 ```json
 {

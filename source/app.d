@@ -97,10 +97,49 @@ void main(string[] args) {
     return;
   }
 
-  // Please edit the below path where you want
-  string dir = expandTilde("~/.myscripts/ctl");
+  string setting_file_path;
+  enum alphakai_dir = "~/.myscripts/ctl";
+  enum default_dir = "~/.config/ctl";
   string setting_file_name = "setting.json";
-  SettingFile sf = readSettingFile("%s/%s".format(dir, setting_file_name));
+  static immutable setting_file_search_dirs = [default_dir, alphakai_dir];
+
+  foreach (dir; setting_file_search_dirs) {
+    immutable path = expandTilde("%s/%s".format(dir, setting_file_name));
+    if (path.exists) {
+      setting_file_path = path;
+    }
+  }
+
+  if (setting_file_path is null) {
+    if (!expandTilde(default_dir)) {
+      mkdir(expandTilde(default_dir));
+    }
+    string default_json = `{
+  "default_account" : "ACCOUNT_NAME1",
+  "accounts" : {
+    "ACCOUNT_NAME1": {
+      "consumerKey"       : "Your consumer key for ACCOUNT_NAME1",
+      "consumerSecret"    : "Your consumer secret for ACCOUNT_NAME1",
+      "accessToken"       : "Your access token for ACCOUNT_NAME1",
+      "accessTokenSecret" : "Your access token secret for ACCOUNT_NAME1"
+    },
+    "ACCOUNT_NAME2" : {
+      "consumerKey"       : "Your consumer key for ACCOUNT_NAME2",
+      "consumerSecret"    : "Your consumer secret for ACCOUNT_NAME2",
+      "accessToken"       : "Your access token for ACCOUNT_NAME2",
+      "accessTokenSecret" : "Your access token secret for ACCOUNT_NAME2"
+    }
+  }
+}`;
+    setting_file_path = "%s/%s".format(default_dir, setting_file_name).expandTilde;
+    File(setting_file_path, "w").write(default_json);
+
+    writeln("Created dummy setting json file at %s", setting_file_path);
+    writeln("Please configure it before use.");
+    return;
+  }
+
+  SettingFile sf = readSettingFile(setting_file_path);
 
   if (specified_account is null) {
     specified_account = sf.default_account;
