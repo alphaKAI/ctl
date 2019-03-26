@@ -103,7 +103,9 @@ void main(string[] args) {
   enum alphakai_dir = "~/.myscripts/ctl";
   enum default_dir = "~/.config/ctl";
   string setting_file_name = "setting.json";
-  immutable setting_file_search_dirs = [xdg_config_home, default_dir, alphakai_dir];
+  immutable setting_file_search_dirs = [
+    xdg_config_home, default_dir, alphakai_dir
+  ];
 
   foreach (dir; setting_file_search_dirs) {
     immutable path = expandTilde("%s/%s".format(dir, setting_file_name));
@@ -170,18 +172,26 @@ void main(string[] args) {
   size_t line_width = getWinSize().width;
   foreach_reverse (elem; parsed.array) {
     writeln(str_rep("-", line_width));
-    dstring name = "%s(@%s)".format(elem.object["user"].object["name"].str,
-        elem.object["user"].object["screen_name"].str).to!dstring;
     dstring created_at = elem.object["created_at"].str.to!dstring;
+
+    dstring user_name = elem.object["user"].object["name"].str.to!dstring;
+    dstring screen_name = elem.object["user"].object["screen_name"].str.to!dstring;
+    dstring name = "%s(@%s)".format(user_name, screen_name).to!dstring;
+    for (size_t trim; east_asian_width(name) + east_asian_width(created_at) + 3 > line_width;
+        ) {
+      name = "%s(@%s)".format(user_name[0 .. $ - ++trim] ~ "...", screen_name).to!dstring;
+    }
+
     string pad = str_rep(" ", line_width - (east_asian_width(name) + east_asian_width(created_at)));
+
     writefln("%s%s%s", name, pad, created_at);
+
     writeln(elem.object["text"].str.to!dstring.str_adjust_len(line_width));
 
     size_t retweet_count = elem.object["retweet_count"].integer;
     size_t favorite_count = elem.object["favorite_count"].integer;
 
-    dstring reaction_box = "[RT: %10d, Favs: %10d]".format(retweet_count,
-        favorite_count).to!dstring;
+    dstring reaction_box = "[RT: %9d, Favs: %9d]".format(retweet_count, favorite_count).to!dstring;
 
     string in_reply_to_status_id = elem.object["id_str"].str;
     reaction_box = "[in_reply_to: %s] %s".format(in_reply_to_status_id, reaction_box).to!dstring;
