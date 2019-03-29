@@ -108,7 +108,7 @@ void main(string[] args) {
     "lists|ls", "get list of your lists", &lists,
     "view_list|vl", "get tweets of list", &view_list,
     "list_id|li", "id of the list", &list_id,
-    "image|im", "preview image inline(macOS and iTerm only)", &image,
+    "image|im", "preview image inline(imgcat or img2sixel is required)", &image,
     "imgcat_path|ip", "path of imgcat", &imgcat_path
     );
   // dfmt on
