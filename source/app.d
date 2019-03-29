@@ -143,6 +143,46 @@ void render_status(JSONValue status, RenderContext ctx) {
   writefln("%s%s", pad_box, reaction_box);
 }
 
+void render_user(JSONValue user, RenderContext ctx) {
+  dstring created_at = "[Registered: %s]".format(user.object["created_at"].str).to!dstring;
+  dstring followers = user.object["followers_count"].integer.to!dstring;
+  dstring following = user.object["friends_count"].integer.to!dstring;
+  immutable _protected = user.object["protected"].boolean;
+
+  dstring user_name = user.object["name"].str.to!dstring;
+  dstring screen_name = user.object["screen_name"].str.to!dstring;
+  dstring name = "%s(@%s)".format(user_name, screen_name).to!dstring;
+  dstring is_protected = (_protected ? "[protected]" : "").to!dstring;
+  dstring ff_counts = "[following: %s, followers: %s]".format(following, followers).to!dstring;
+  for (size_t trim; east_asian_width(name) + east_asian_width(is_protected) + east_asian_width(
+      ff_counts) + east_asian_width(created_at) + 3 > ctx.line_width;) {
+    name = "%s(@%s)".format(user_name[0 .. $ - ++trim] ~ "...", screen_name).to!dstring;
+  }
+
+  size_t elems_len = east_asian_width(name) + east_asian_width(
+      is_protected) + east_asian_width(ff_counts) + east_asian_width(created_at);
+  enum pad_count = 3;
+  string pad;
+  if (elems_len < ctx.line_width) {
+    immutable total_pad_len = ctx.line_width - elems_len;
+    auto unit_of_pad_len = total_pad_len / pad_count;
+    if ((total_pad_len % pad_count) != 0) {
+      unit_of_pad_len--;
+    }
+    pad = " ".str_rep(unit_of_pad_len);
+  }
+  writefln("%s%s%s%s%s%s%s", name, pad, is_protected, pad, ff_counts, pad, created_at);
+  writeln(user.object["description"].str.to!dstring.str_adjust_len(ctx.line_width));
+  writeln("Loc: %s".format(user.object["location"]).to!dstring.str_adjust_len(ctx.line_width));
+
+  user.object["status"].object["user"] = [
+    "name": user.object["name"],
+    "screen_name": user.object["screen_name"]
+  ];
+
+  render_status(user.object["status"], ctx);
+}
+
 void main(string[] args) {
   string specified_account;
   string count = "20";
@@ -155,6 +195,7 @@ void main(string[] args) {
   string imgcat_path;
   bool dump_json;
   string show_status;
+  string show_user;
 
   // dfmt off
   auto helpInformation = getopt(args,
@@ -168,7 +209,8 @@ void main(string[] args) {
     "image|im", "preview image inline(imgcat or img2sixel is required)", &image,
     "imgcat_path|ip", "path of imgcat", &imgcat_path,
     "dump_json|json", "dump json instead of readble output", &dump_json,
-    "show_status|ss", "show the tweet", &show_status
+    "show_status|ss", "show the tweet", &show_status,
+    "show_user|su", "show the user", &show_user
     );
   // dfmt on
   if (helpInformation.helpWanted) {
@@ -245,7 +287,21 @@ void main(string[] args) {
 
   if (show_status !is null) {
     result = t4d.request("GET", "statuses/show.json", ["id": show_status]);
-    render_status(parseJSON(result), ctx);
+    if (dump_json) {
+      writeln(result);
+    } else {
+      render_status(parseJSON(result), ctx);
+    }
+    return;
+  }
+
+  if (show_user !is null) {
+    result = t4d.request("GET", "users/show.json", ["screen_name": show_user]);
+    if (dump_json) {
+      writeln(result);
+    } else {
+      render_user(parseJSON(result), ctx);
+    }
     return;
   }
 
