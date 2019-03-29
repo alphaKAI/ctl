@@ -88,11 +88,21 @@ void main(string[] args) {
   string count = "20";
   string specified_user;
   bool mention;
+  bool lists;
+  bool view_list;
+  string list_id;
 
-  auto helpInformation = getopt(args, "account|a", "specify the account to tweet",
-      &specified_account, "count|c", "count of tweets", &count,
-      "user|u", "get tweets from specified user(screen_name)",
-      &specified_user, "mention|m", "get mentions of you", &mention);
+  // dfmt off
+  auto helpInformation = getopt(args,
+    "account|a", "specify the account to tweet", &specified_account,
+    "count|c", "count of tweets", &count,
+    "user|u", "get tweets from specified user(screen_name)", &specified_user,
+    "mention|m", "get mentions of you", &mention,
+    "lists|ls", "get list of your lists", &lists,
+    "view_list|vl", "get tweets of list", &view_list,
+    "list_id|li", "id of the list", &list_id
+    );
+  // dfmt on
   if (helpInformation.helpWanted) {
     defaultGetoptPrinter("Usage:", helpInformation.options);
     return;
@@ -150,6 +160,7 @@ void main(string[] args) {
   }
 
   auto t4d = new Twitter4D(sf.accounts[specified_account]);
+  size_t line_width = getWinSize().width;
 
   char[] result;
   if (mention) {
@@ -157,19 +168,92 @@ void main(string[] args) {
         "count": count
         ]);
   } else {
+    if (lists) {
+      if (specified_user is null) {
+        auto ret = t4d.request("GET", "account/verify_credentials.json");
+        specified_user = parseJSON(ret).object["screen_name"].str;
+      }
+
+      auto parsed = t4d.request("GET", "lists/list.json",
+          ["screen_name": specified_user]).parseJSON;
+
+      string[] ids;
+
+      foreach (i, JSONValue elem; parsed.array) {
+        writeln(str_rep("-", line_width));
+
+        string id = elem.object["id_str"].str;
+        ids ~= id;
+        writefln("[%d:%s] %s", i, id, elem.object["name"].str);
+
+        string description = elem.object["description"].str;
+        if (description.length) {
+          writeln(description.to!dstring.str_adjust_len(line_width));
+        }
+
+        dstring created_at = elem.object["created_at"].str.to!dstring;
+
+        dstring user_name = elem.object["user"].object["name"].str.to!dstring;
+        dstring screen_name = elem.object["user"].object["screen_name"].str.to!dstring;
+        dstring name = "Authoer: %s(@%s)".format(user_name, screen_name).to!dstring;
+        for (size_t trim; east_asian_width(name) + east_asian_width(created_at) + 3 > line_width;
+            ) {
+          name = "%s(@%s)".format(user_name[0 .. $ - ++trim] ~ "...", screen_name).to!dstring;
+        }
+
+        string pad = str_rep(" ",
+            line_width - (east_asian_width(name) + east_asian_width(created_at)));
+
+        writefln("%s%s%s", name, pad, created_at);
+      }
+
+      if (!view_list) {
+        return;
+      }
+
+      while (1) {
+        write("input number which you want (or n as No): ");
+        string input = readln.chomp;
+        if (input == "n") {
+          return;
+        }
+        try {
+          size_t idx = input.to!size_t;
+          list_id = ids[idx];
+          view_list = true;
+          break;
+        } catch (Exception e) {
+          writeln("Invalid input, please retry");
+          continue;
+        }
+      }
+    }
+
+    if (view_list) {
+      if (list_id is null) {
+        throw new Exception("list_id is null, please specify");
+      }
+
+      result = t4d.request("GET", "lists/statuses.json", ["list_id": list_id]);
+
+      goto render_result;
+    }
+
     if (specified_user is null) {
       result = t4d.request("GET", "statuses/home_timeline.json", [
           "count": count
           ]);
+      goto render_result;
     } else {
       result = t4d.request("GET", "statuses/user_timeline.json",
           ["count": count, "screen_name": specified_user]);
+      goto render_result;
     }
   }
 
+render_result:
   auto parsed = parseJSON(result);
 
-  size_t line_width = getWinSize().width;
   foreach_reverse (elem; parsed.array) {
     writeln(str_rep("-", line_width));
     dstring created_at = elem.object["created_at"].str.to!dstring;
