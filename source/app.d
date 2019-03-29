@@ -154,6 +154,7 @@ void main(string[] args) {
   bool image;
   string imgcat_path;
   bool dump_json;
+  string show_status;
 
   // dfmt off
   auto helpInformation = getopt(args,
@@ -166,7 +167,8 @@ void main(string[] args) {
     "list_id|li", "id of the list", &list_id,
     "image|im", "preview image inline(imgcat or img2sixel is required)", &image,
     "imgcat_path|ip", "path of imgcat", &imgcat_path,
-    "dump_json|json", "dump json instead of readble output", &dump_json
+    "dump_json|json", "dump json instead of readble output", &dump_json,
+    "show_status|ss", "show the tweet", &show_status
     );
   // dfmt on
   if (helpInformation.helpWanted) {
@@ -175,7 +177,7 @@ void main(string[] args) {
   }
 
   string setting_file_path;
-  enum xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
+  immutable xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
   enum alphakai_dir = "~/.myscripts/ctl";
   enum default_dir = "~/.config/ctl";
   string setting_file_name = "setting.json";
@@ -240,6 +242,13 @@ void main(string[] args) {
   RenderContext ctx = RenderContext(line_width, image, imgcat_path);
 
   char[] result;
+
+  if (show_status !is null) {
+    result = t4d.request("GET", "statuses/show.json", ["id": show_status]);
+    render_status(parseJSON(result), ctx);
+    return;
+  }
+
   if (mention) {
     result = t4d.request("GET", "statuses/mentions_timeline.json", [
         "count": count

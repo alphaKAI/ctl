@@ -55,6 +55,7 @@ $ ./ctl
 - --image or --im : preview images in a tweet inline (imgcat or img2sixel is required)
 - --imgcat_path path_of_imgcat or --ip path_of_imgcat : specify path of imgcat or img2sixel
 - --dump_json or --json : dump raw json instead of printing readble output
+- --show_status tweet_id or --ss tweet_id : show the tweet
 
 If you want to use image option, you have to specify path of imgcat or img2sixel in option or setting.json.  
 
