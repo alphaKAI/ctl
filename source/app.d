@@ -175,7 +175,7 @@ void main(string[] args) {
   }
 
   string setting_file_path;
-  auto xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
+  enum xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
   enum alphakai_dir = "~/.myscripts/ctl";
   enum default_dir = "~/.config/ctl";
   string setting_file_name = "setting.json";
