@@ -96,6 +96,53 @@ T unwrap_default(T)(Nullable!T val) {
   }
 }
 
+struct RenderContext {
+  size_t line_width;
+  bool image;
+  string imgcat_path;
+}
+
+void render_status(JSONValue status, RenderContext ctx) {
+  writeln(str_rep("-", ctx.line_width));
+  dstring created_at = status.object["created_at"].str.to!dstring;
+
+  dstring user_name = status.object["user"].object["name"].str.to!dstring;
+  dstring screen_name = status.object["user"].object["screen_name"].str.to!dstring;
+  dstring name = "%s(@%s)".format(user_name, screen_name).to!dstring;
+  for (size_t trim; east_asian_width(name) + east_asian_width(created_at) + 3 > ctx.line_width;
+      ) {
+    name = "%s(@%s)".format(user_name[0 .. $ - ++trim] ~ "...", screen_name).to!dstring;
+  }
+
+  string pad = str_rep(" ", ctx.line_width - (east_asian_width(name) + east_asian_width(created_at)));
+
+  writefln("%s%s%s", name, pad, created_at);
+
+  writeln(status.object["text"].str.to!dstring.str_adjust_len(ctx.line_width));
+
+  if (ctx.image && "extended_entities" in status.object
+      && "media" in status.object["extended_entities"].object) {
+    import std.process : executeShell;
+
+    foreach (e; status.object["extended_entities"].object["media"].array) {
+      string media_url = e.object["media_url"].str;
+
+      string cmd = "curl %s 2>/dev/null | %s".format(media_url, ctx.imgcat_path);
+      executeShell(cmd).output.writeln;
+    }
+  }
+
+  size_t retweet_count = status.object["retweet_count"].integer;
+  size_t favorite_count = status.object["favorite_count"].integer;
+
+  dstring reaction_box = "[RT: %9d, Favs: %9d]".format(retweet_count, favorite_count).to!dstring;
+
+  string in_reply_to_status_id = status.object["id_str"].str;
+  reaction_box = "[in_reply_to: %s] %s".format(in_reply_to_status_id, reaction_box).to!dstring;
+  dstring pad_box = str_rep(" ", ctx.line_width - east_asian_width(reaction_box)).to!dstring;
+  writefln("%s%s", pad_box, reaction_box);
+}
+
 void main(string[] args) {
   string specified_account;
   string count = "20";
@@ -190,6 +237,7 @@ void main(string[] args) {
 
   auto t4d = new Twitter4D(sf.accounts[specified_account]);
   size_t line_width = getWinSize().unwrap_default().width;
+  RenderContext ctx = RenderContext(line_width, image, imgcat_path);
 
   char[] result;
   if (mention) {
@@ -293,43 +341,6 @@ render_result:
   auto parsed = parseJSON(result);
 
   foreach_reverse (elem; parsed.array) {
-    writeln(str_rep("-", line_width));
-    dstring created_at = elem.object["created_at"].str.to!dstring;
-
-    dstring user_name = elem.object["user"].object["name"].str.to!dstring;
-    dstring screen_name = elem.object["user"].object["screen_name"].str.to!dstring;
-    dstring name = "%s(@%s)".format(user_name, screen_name).to!dstring;
-    for (size_t trim; east_asian_width(name) + east_asian_width(created_at) + 3 > line_width;
-        ) {
-      name = "%s(@%s)".format(user_name[0 .. $ - ++trim] ~ "...", screen_name).to!dstring;
-    }
-
-    string pad = str_rep(" ", line_width - (east_asian_width(name) + east_asian_width(created_at)));
-
-    writefln("%s%s%s", name, pad, created_at);
-
-    writeln(elem.object["text"].str.to!dstring.str_adjust_len(line_width));
-
-    if (image && "extended_entities" in elem.object
-        && "media" in elem.object["extended_entities"].object) {
-      import std.process : executeShell;
-
-      foreach (e; elem.object["extended_entities"].object["media"].array) {
-        string media_url = e.object["media_url"].str;
-
-        string cmd = "curl %s 2>/dev/null | %s".format(media_url, imgcat_path);
-        executeShell(cmd).output.writeln;
-      }
-    }
-
-    size_t retweet_count = elem.object["retweet_count"].integer;
-    size_t favorite_count = elem.object["favorite_count"].integer;
-
-    dstring reaction_box = "[RT: %9d, Favs: %9d]".format(retweet_count, favorite_count).to!dstring;
-
-    string in_reply_to_status_id = elem.object["id_str"].str;
-    reaction_box = "[in_reply_to: %s] %s".format(in_reply_to_status_id, reaction_box).to!dstring;
-    dstring pad_box = str_rep(" ", line_width - east_asian_width(reaction_box)).to!dstring;
-    writefln("%s%s", pad_box, reaction_box);
+    render_status(elem, ctx);
   }
 }
