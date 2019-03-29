@@ -299,7 +299,7 @@ void main(string[] args) {
 
       while (1) {
         write("input number which you want (or n as No): ");
-        string input = readln.chomp;
+        immutable input = readln.chomp;
         if (input == "n") {
           return;
         }
