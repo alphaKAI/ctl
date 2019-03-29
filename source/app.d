@@ -7,6 +7,7 @@ import eaw;
 
 struct SettingFile {
   string default_account;
+  string imgcat_path;
   string[string][string] accounts;
 }
 
@@ -33,6 +34,10 @@ SettingFile readSettingFile(string path) {
     }
   } else {
     throw new Exception("No such a field - %s".format("accounts"));
+  }
+
+  if ("imgcat_path" in parsed.object) {
+    ret.imgcat_path = parsed.object["imgcat_path"].str;
   }
 
   return ret;
@@ -91,6 +96,8 @@ void main(string[] args) {
   bool lists;
   bool view_list;
   string list_id;
+  bool image;
+  string imgcat_path;
 
   // dfmt off
   auto helpInformation = getopt(args,
@@ -100,7 +107,9 @@ void main(string[] args) {
     "mention|m", "get mentions of you", &mention,
     "lists|ls", "get list of your lists", &lists,
     "view_list|vl", "get tweets of list", &view_list,
-    "list_id|li", "id of the list", &list_id
+    "list_id|li", "id of the list", &list_id,
+    "image|im", "preview image inline(macOS and iTerm only)", &image,
+    "imgcat_path|ip", "path of imgcat", &imgcat_path
     );
   // dfmt on
   if (helpInformation.helpWanted) {
@@ -157,6 +166,16 @@ void main(string[] args) {
 
   if (specified_account is null) {
     specified_account = sf.default_account;
+  }
+
+  if (image) {
+    if (imgcat_path is null) {
+      if (sf.imgcat_path !is null) {
+        imgcat_path = sf.imgcat_path.expandTilde;
+      } else {
+        throw new Exception("Please specify imgcat_path in an option or setting.json");
+      }
+    }
   }
 
   auto t4d = new Twitter4D(sf.accounts[specified_account]);
@@ -267,6 +286,18 @@ render_result:
     writefln("%s%s%s", name, pad, created_at);
 
     writeln(elem.object["text"].str.to!dstring.str_adjust_len(line_width));
+
+    if (image && "extended_entities" in elem.object
+        && "media" in elem.object["extended_entities"].object) {
+      import std.process : executeShell;
+
+      foreach (e; elem.object["extended_entities"].object["media"].array) {
+        string media_url = e.object["media_url"].str;
+
+        string cmd = "curl %s 2>/dev/null | %s".format(media_url, imgcat_path);
+        executeShell(cmd).output.writeln;
+      }
+    }
 
     size_t retweet_count = elem.object["retweet_count"].integer;
     size_t favorite_count = elem.object["favorite_count"].integer;

@@ -53,6 +53,13 @@ $ ./ctl
 - --view_list or --vl : get tweets of list (you can combine --ls option or --li option)
 - --list_id list_id or --l : specify id of the list
 
+### supported only macOS(iTerm2) features
+
+- --image or --im : preview images in a tweet inline (macOS and iTerm2 only supported)
+- --imgcat_path path_of_imgcat or --ip path_of_imgcat : specify path of imgcat
+
+If you want to use this option, you have to specify path of imgcat in option or setting.json.  
+
 ## LICENSE
 ctl is released under the MIT License.  
 Copyright (C) 2019, Akihiro Shoji
