@@ -229,11 +229,7 @@ void main(string[] args) {
       }
     }
 
-    if (view_list) {
-      if (list_id is null) {
-        throw new Exception("list_id is null, please specify");
-      }
-
+    if (view_list || list_id !is null) {
       result = t4d.request("GET", "lists/statuses.json", ["list_id": list_id]);
 
       goto render_result;

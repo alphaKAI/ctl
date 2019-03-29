@@ -51,7 +51,7 @@ $ ./ctl
 - --user screen_name or -u screen_name : get tweets from screen_name
 - --lists or --ls : get list of your lists (you can specify a user by -u option)
 - --view_list or --vl : get tweets of list (you can combine --ls option or --li option)
-- --list_id list_id or --l : specify id of the list (please combine with --vl option)
+- --list_id list_id or --l : specify id of the list
 
 ## LICENSE
 ctl is released under the MIT License.  
