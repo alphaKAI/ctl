@@ -219,26 +219,27 @@ void main(string[] args) {
   }
 
   string setting_file_path;
-  immutable xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
-  enum alphakai_dir = "~/.myscripts/ctl";
-  enum default_dir = "~/.config/ctl";
-  string setting_file_name = "setting.json";
-  immutable setting_file_search_dirs = [
-    xdg_config_home, default_dir, alphakai_dir
-  ];
+  {
+    immutable xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
+    enum alphakai_dir = "~/.myscripts/ctl";
+    enum default_dir = "~/.config/ctl";
+    string setting_file_name = "setting.json";
+    immutable setting_file_search_dirs = [
+      xdg_config_home, default_dir, alphakai_dir
+    ];
 
-  foreach (dir; setting_file_search_dirs) {
-    immutable path = expandTilde("%s/%s".format(dir, setting_file_name));
-    if (path.exists) {
-      setting_file_path = path;
+    foreach (dir; setting_file_search_dirs) {
+      immutable path = expandTilde("%s/%s".format(dir, setting_file_name));
+      if (path.exists) {
+        setting_file_path = path;
+      }
     }
-  }
 
-  if (setting_file_path is null) {
-    if (!expandTilde(default_dir)) {
-      mkdir(expandTilde(default_dir));
-    }
-    string default_json = `{
+    if (setting_file_path is null) {
+      if (!expandTilde(default_dir)) {
+        mkdir(expandTilde(default_dir));
+      }
+      string default_json = `{
   "default_account" : "ACCOUNT_NAME1",
   "accounts" : {
     "ACCOUNT_NAME1": {
@@ -255,12 +256,13 @@ void main(string[] args) {
     }
   }
 }`;
-    setting_file_path = "%s/%s".format(default_dir, setting_file_name).expandTilde;
-    File(setting_file_path, "w").write(default_json);
+      setting_file_path = "%s/%s".format(default_dir, setting_file_name).expandTilde;
+      File(setting_file_path, "w").write(default_json);
 
-    writeln("Created dummy setting json file at %s", setting_file_path);
-    writeln("Please configure it before use.");
-    return;
+      writeln("Created dummy setting json file at %s", setting_file_path);
+      writeln("Please configure it before use.");
+      return;
+    }
   }
 
   SettingFile sf = readSettingFile(setting_file_path);
