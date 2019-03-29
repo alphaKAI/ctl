@@ -77,14 +77,22 @@ struct WinSize {
   int height;
 }
 
-WinSize getWinSize() {
+Nullable!WinSize getWinSize() {
   import core.sys.posix.sys.ioctl, core.sys.posix.unistd;
 
   winsize ws;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1) {
-    return WinSize(ws.ws_col, ws.ws_row);
+    return nullable(WinSize(ws.ws_col, ws.ws_row));
   } else {
-    throw new Exception("Failed to get winsize");
+    return typeof(return).init;
+  }
+}
+
+T unwrap_default(T)(Nullable!T val) {
+  if (val.isNull) {
+    return T.init;
+  } else {
+    return val.get;
   }
 }
 
@@ -181,7 +189,7 @@ void main(string[] args) {
   }
 
   auto t4d = new Twitter4D(sf.accounts[specified_account]);
-  size_t line_width = getWinSize().width;
+  size_t line_width = getWinSize().unwrap_default().width;
 
   char[] result;
   if (mention) {
