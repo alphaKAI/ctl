@@ -98,6 +98,7 @@ void main(string[] args) {
   string list_id;
   bool image;
   string imgcat_path;
+  bool dump_json;
 
   // dfmt off
   auto helpInformation = getopt(args,
@@ -109,7 +110,8 @@ void main(string[] args) {
     "view_list|vl", "get tweets of list", &view_list,
     "list_id|li", "id of the list", &list_id,
     "image|im", "preview image inline(imgcat or img2sixel is required)", &image,
-    "imgcat_path|ip", "path of imgcat", &imgcat_path
+    "imgcat_path|ip", "path of imgcat", &imgcat_path,
+    "dump_json|json", "dump json instead of readble output", &dump_json
     );
   // dfmt on
   if (helpInformation.helpWanted) {
@@ -186,6 +188,7 @@ void main(string[] args) {
     result = t4d.request("GET", "statuses/mentions_timeline.json", [
         "count": count
         ]);
+    goto render_result;
   } else {
     if (lists) {
       if (specified_user is null) {
@@ -193,8 +196,16 @@ void main(string[] args) {
         specified_user = parseJSON(ret).object["screen_name"].str;
       }
 
-      auto parsed = t4d.request("GET", "lists/list.json",
-          ["screen_name": specified_user]).parseJSON;
+      auto ret = t4d.request("GET", "lists/list.json", [
+          "screen_name": specified_user
+          ]);
+
+      if (dump_json) {
+        writeln(ret);
+        return;
+      }
+
+      auto parsed = ret.parseJSON;
 
       string[] ids;
 
@@ -267,6 +278,10 @@ void main(string[] args) {
   }
 
 render_result:
+  if (dump_json) {
+    writeln(result);
+    return;
+  }
   auto parsed = parseJSON(result);
 
   foreach_reverse (elem; parsed.array) {
