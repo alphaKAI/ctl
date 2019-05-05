@@ -3,7 +3,7 @@ import std.process;
 import std.file, std.path, std.json, std.conv, std.string;
 import std.format, std.getopt, std.typecons;
 import twitter4d;
-import eaw;
+import eaw, util;
 
 struct SettingFile {
   string default_account;
@@ -102,9 +102,19 @@ struct RenderContext {
   string imgcat_path;
 }
 
+string date_localize(string date) {
+  string fmt = "%a %b %d %H:%M:%S %z %Y";
+  auto t = date.parse_time(fmt).to_tm;
+  string dst = date.dup;
+  import core.stdc.time;
+
+  strftime(cast(char*)dst.toStringz, dst.length, cast(const(char*))fmt.toStringz, &t);
+  return dst;
+}
+
 void render_status(JSONValue status, RenderContext ctx) {
   writeln(str_rep("-", ctx.line_width));
-  dstring created_at = status.object["created_at"].str.to!dstring;
+  dstring created_at = status.object["created_at"].str.date_localize.to!dstring;
 
   dstring user_name = status.object["user"].object["name"].str.to!dstring;
   dstring screen_name = status.object["user"].object["screen_name"].str.to!dstring;
@@ -144,7 +154,8 @@ void render_status(JSONValue status, RenderContext ctx) {
 }
 
 void render_user(JSONValue user, RenderContext ctx) {
-  dstring created_at = "[Registered: %s]".format(user.object["created_at"].str).to!dstring;
+  dstring created_at = "[Registered: %s]".format(
+      user.object["created_at"].str.date_localize).to!dstring;
   dstring followers = user.object["followers_count"].integer.to!dstring;
   dstring following = user.object["friends_count"].integer.to!dstring;
   immutable _protected = user.object["protected"].boolean;
@@ -344,7 +355,7 @@ void main(string[] args) {
           writeln(description.to!dstring.str_adjust_len(line_width));
         }
 
-        dstring created_at = elem.object["created_at"].str.to!dstring;
+        dstring created_at = elem.object["created_at"].str.date_localize.to!dstring;
 
         dstring user_name = elem.object["user"].object["name"].str.to!dstring;
         dstring screen_name = elem.object["user"].object["screen_name"].str.to!dstring;
