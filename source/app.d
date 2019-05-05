@@ -231,13 +231,28 @@ void main(string[] args) {
 
   string setting_file_path;
   {
-    immutable xdg_config_home = environment.get("XDG_CONFIG_HOME") ~ "/ctwi";
     enum alphakai_dir = "~/.myscripts/ctl";
     enum default_dir = "~/.config/ctl";
     string setting_file_name = "setting.json";
-    immutable setting_file_search_dirs = [
-      xdg_config_home, default_dir, alphakai_dir
-    ];
+
+    string[] setting_file_search_dirs;
+    auto xdg_config_home = environment.get("XDG_CONFIG_HOME");
+    if (xdg_config_home !is null)
+    {
+      setting_file_search_dirs = [xdg_config_home ~ "/ctwi", default_dir, alphakai_dir];
+    }
+    else
+    {
+      auto home_dir = environment.get("HOME");
+      if (home_dir !is null)
+      {
+        setting_file_search_dirs = [home_dir ~ ".config/ctwi", default_dir, alphakai_dir];
+      }
+      else
+      {
+        setting_file_search_dirs = [default_dir, alphakai_dir];
+      }
+    }
 
     foreach (dir; setting_file_search_dirs) {
       immutable path = expandTilde("%s/%s".format(dir, setting_file_name));
