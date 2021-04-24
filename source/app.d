@@ -2,6 +2,7 @@ import std.stdio;
 import std.process;
 import std.file, std.path, std.json, std.conv, std.string;
 import std.format, std.getopt, std.typecons;
+import std.datetime, std.datetime.timezone;
 import twitter4d;
 import eaw, util;
 
@@ -103,13 +104,9 @@ struct RenderContext {
 }
 
 string date_localize(string date) {
-  string fmt = "%a %b %d %H:%M:%S %z %Y";
-  auto t = date.parse_time(fmt).to_tm;
-  string dst = date.dup;
-  import core.stdc.time;
-
-  strftime(cast(char*)dst.toStringz, dst.length, cast(const(char*))fmt.toStringz, &t);
-  return dst;
+  immutable string fmt = "%a %b %d %H:%M:%S %z %Y";
+  const auto s = new SysTime(date.parse_time(fmt), LocalTime());
+  return s.toSimpleString;
 }
 
 void render_status(JSONValue status, RenderContext ctx) {
@@ -237,19 +234,17 @@ void main(string[] args) {
 
     string[] setting_file_search_dirs;
     auto xdg_config_home = environment.get("XDG_CONFIG_HOME");
-    if (xdg_config_home !is null)
-    {
-      setting_file_search_dirs = [xdg_config_home ~ "/ctwi", default_dir, alphakai_dir];
-    }
-    else
-    {
+    if (xdg_config_home !is null) {
+      setting_file_search_dirs = [
+        xdg_config_home ~ "/ctwi", default_dir, alphakai_dir
+      ];
+    } else {
       auto home_dir = environment.get("HOME");
-      if (home_dir !is null)
-      {
-        setting_file_search_dirs = [home_dir ~ ".config/ctwi", default_dir, alphakai_dir];
-      }
-      else
-      {
+      if (home_dir !is null) {
+        setting_file_search_dirs = [
+          home_dir ~ ".config/ctwi", default_dir, alphakai_dir
+        ];
+      } else {
         setting_file_search_dirs = [default_dir, alphakai_dir];
       }
     }
